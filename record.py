@@ -23,9 +23,7 @@ def get_OHLC(pair, last2min, slept_time, err_sleep_time):
         try:
             OHLC_res = k.query_public('OHLC', data = {'pair': pair, 'since': last2min})
             last = OHLC_res['result']['last'] # last corresponds to [-2] compnent (see below for explanation)
-            # print("OHLC: pair, last2min, last", pair, last2min, last)
             bars = OHLC_res['result'][pair]
-            # print(bars[-2])
             OHLC_str = ''
             # - append OHLC into one string. [-2] component is the one already completed, [-1] is the one that is still appending - NOTE: can use [-1] for tracking on-the-fly, also OHLC data for the returned time integer corresponds to what was accumulated starting from the this time + 60sec
             for val in bars[-2]: OHLC_str = OHLC_str + str(val) + ','
@@ -50,7 +48,6 @@ def get_Trades(pair, last2min, OHLC_last, slept_time, err_sleep_time):
     while no_success:
         try:
             Trades_res = k.query_public('Trades', {'pair': pair, 'since': last2min})
-            # print("Trades: pair, last2min, last", pair, last2min)
             count = 0
             # - append to a string the time integer the trades correspond to
             Trades_str = str(OHLC_last) + ','
@@ -59,8 +56,6 @@ def get_Trades(pair, last2min, OHLC_last, slept_time, err_sleep_time):
                 if (trade[2] >= float(OHLC_last)) and (trade[2] < float(OHLC_last+60)):
                     for var in trade: Trades_str = Trades_str + str(var) + ','
                     count = count + 1
-                    # print(trade)
-            # print("count", count)
             no_success = False
         except:
             print(f'error in {pair}-Trades at time:', last2min, 'trial', n_tries)
@@ -119,7 +114,7 @@ if __name__ == '__main__':
         month = str(datetime.fromtimestamp(time.time()).month)
         day   = str(datetime.fromtimestamp(time.time()).day)
         hour  = str(datetime.fromtimestamp(time.time()).hour)
-        file_dir = year + '/' + month + '/' + day + '/' + hour + '/'
+        file_dir = "data/" + year + '/' + month + '/' + day + '/' + hour + '/'
         Path(file_dir).mkdir(parents=True, exist_ok=True)
         # START APPENDING INTO HEADER FILE, IF NOT IN THE FOLDER
         if (os.path.isfile(file_dir + 'header.csv') == False) or new_start:
@@ -132,7 +127,6 @@ if __name__ == '__main__':
 
         slept_time = 0
         last2min = OHLC_next-120
-        # print("last2min", last2min)
 
         # FOR ALL PAIRS
         for pair in PAIRS:
@@ -174,6 +168,4 @@ if __name__ == '__main__':
             print("slept for", slept_time, "secs, with last record at", OHLC_last)
         OHLC_next = OHLC_last + 60
         sleep_time = 61- int(int(time.time()) - OHLC_next)
-        # print("last", OHLC_last, type(OHLC_last))
-        # print('time, OHLC_last, sleep', time.time(), OHLC_last, sleep_time)
         time.sleep(max(0.0,sleep_time))
